@@ -170,6 +170,15 @@ public class TechTree implements ContentList{
                                         });
 
                                         node(cryofluidMixer, () -> {
+                                            node(insulatorPress, () -> {
+                                                node(supercoolantRefinery, Seq.with(new Research(Items.insulator)), () -> {
+                                                    node(insulatorWall, () -> {
+                                                    });
+
+                                                    node(insulatorWallLarge, () -> {
+                                                    });
+                                                });
+                                            });
 
                                         });
                                     });
@@ -589,6 +598,9 @@ public class TechTree implements ContentList{
                 nodeProduce(Items.lead, () -> {
                     nodeProduce(Items.titanium, () -> {
                         nodeProduce(Liquids.cryofluid, () -> {
+                            nodeProduce(Liquids.supercoolant, () -> {
+
+                            });
 
                         });
 
