@@ -70,6 +70,8 @@ public class Rules{
     public float enemyCoreBuildRadius = 400f;
     /** If true, no-build zones are calculated based on the closest core. */
     public boolean polygonCoreProtection = false;
+    /** If true, dead teams in PvP automatically have their blocks & units converted to derelict upon death. */
+    public boolean cleanupDeadTeams = true;
     /** Radius around enemy wave drop zones.*/
     public float dropZoneRadius = 300f;
     /** Time between waves in ticks. */
@@ -107,6 +109,8 @@ public class Rules{
     public Team defaultTeam = Team.sharded;
     /** team of the enemy in waves/sectors. */
     public Team waveTeam = Team.crux;
+    /** color of clouds that is displayed when the player is landing */
+    public Color cloudColor = new Color(0f, 0f, 0f, 0f);
     /** name of the custom mode that this ruleset describes, or null. */
     public @Nullable String modeName;
     /** Whether cores incinerate items when full, just like in the campaign. */

@@ -287,6 +287,7 @@ public class World{
             if(liquid != null) content.add(liquid);
         }
 
+        state.rules.cloudColor = sector.planet.landCloudColor;
         sector.info.resources = content.asArray();
         sector.info.resources.sort(Structs.comps(Structs.comparing(Content::getContentType), Structs.comparingInt(c -> c.id)));
         sector.saveInfo();
@@ -525,8 +526,7 @@ public class World{
 
     private class Context implements WorldContext{
 
-        Context(){
-        }
+        Context(){}
 
         @Override
         public Tile tile(int index){
@@ -579,7 +579,7 @@ public class World{
 
                 for(GenerateFilter filter : filters){
                     filter.randomize();
-                    input.begin(filter, width(), height(), (x, y) -> tiles.getn(x, y));
+                    input.begin(width(), height(), (x, y) -> tiles.getn(x, y));
                     filter.apply(tiles, input);
                 }
             }

@@ -52,8 +52,8 @@ public class UnitTypes implements ContentList{
     //air + payload, legacy
     public static @EntityDef(value = {Unitc.class, Payloadc.class}, legacy = true) UnitType quad;
 
-    //air + payload + ammo distribution
-    public static @EntityDef({Unitc.class, Payloadc.class, AmmoDistributec.class}) UnitType oct;
+    //air + payload + legacy (different branch)
+    public static @EntityDef(value = {Unitc.class, Payloadc.class}, legacy = true) UnitType oct;
 
     //air, legacy
     public static @EntityDef(value = {Unitc.class}, legacy = true) UnitType alpha, beta, gamma;
@@ -89,6 +89,7 @@ public class UnitTypes implements ContentList{
             hitSize = 10f;
             health = 540;
             armor = 4f;
+            ammoType = AmmoTypes.coal;
 
             immunities.add(StatusEffects.burning);
 
@@ -123,6 +124,7 @@ public class UnitTypes implements ContentList{
             health = 900;
             armor = 9f;
             mechFrontSway = 0.55f;
+            ammoType = AmmoTypes.graphite;
 
             weapons.add(new Weapon("artillery"){{
                 top = false;
@@ -156,6 +158,7 @@ public class UnitTypes implements ContentList{
             armor = 10f;
             canDrown = false;
             mechFrontSway = 1f;
+            ammoType = AmmoTypes.thorium;
 
             mechStepParticles = true;
             mechStepShake = 0.15f;
@@ -220,6 +223,7 @@ public class UnitTypes implements ContentList{
             canDrown = false;
             mechFrontSway = 1.9f;
             mechSideSway = 0.6f;
+            ammoType = AmmoTypes.thorium;
 
             weapons.add(
             new Weapon("reign-weapon"){{
@@ -417,14 +421,14 @@ public class UnitTypes implements ContentList{
             mechStepShake = 0.15f;
             ammoType = AmmoTypes.powerHigh;
 
-            speed = 0.39f;
+            speed = 0.4f;
             boostMultiplier = 2.2f;
             engineOffset = 12f;
             engineSize = 6f;
             lowAltitude = true;
             riseSpeed = 0.02f;
 
-            health = 7500f;
+            health = 8000f;
             armor = 9f;
             canBoost = true;
             landShake = 4f;
@@ -449,8 +453,8 @@ public class UnitTypes implements ContentList{
                 cooldownTime = 200f;
 
                 bullet = new ContinuousLaserBulletType(){{
-                    damage = 30f;
-                    length = 175f;
+                    damage = 32f;
+                    length = 180f;
                     hitEffect = Fx.hitMeltHeal;
                     drawSize = 420f;
                     lifetime = 160f;
@@ -558,6 +562,7 @@ public class UnitTypes implements ContentList{
             health = 200;
             mechSideSway = 0.25f;
             range = 40f;
+            ammoType = AmmoTypes.coal;
 
             weapons.add(new Weapon(){{
                 reload = 24f;
@@ -595,6 +600,7 @@ public class UnitTypes implements ContentList{
             legMoveSpace = 1.4f;
             hovering = true;
             armor = 3f;
+            ammoType = AmmoTypes.coal;
 
             allowLegStep = true;
             visualElevation = 0.2f;
@@ -928,6 +934,7 @@ public class UnitTypes implements ContentList{
             engineOffset = 5.5f;
             range = 140f;
             targetAir = false;
+            targetFlags = new BlockFlag[]{BlockFlag.generator, null};
             commandLimit = 4;
             circleTarget = true;
             hitSize = 7;
@@ -961,9 +968,10 @@ public class UnitTypes implements ContentList{
             range = 140f;
             faceTarget = false;
             armor = 3f;
-            targetFlag = BlockFlag.factory;
+            targetFlags = new BlockFlag[]{BlockFlag.factory, null};
             commandLimit = 5;
             circleTarget = true;
+            ammoType = AmmoTypes.graphite;
 
             weapons.add(new Weapon(){{
                 minShootVelocity = 0.75f;
@@ -999,8 +1007,10 @@ public class UnitTypes implements ContentList{
             lowAltitude = true;
             armor = 5f;
 
+            targetFlags = new BlockFlag[]{BlockFlag.launchPad, BlockFlag.storage, BlockFlag.battery, null};
             engineOffset = 12f;
             engineSize = 3f;
+            ammoType = AmmoTypes.graphite;
 
             weapons.add(new Weapon("zenith-missiles"){{
                 reload = 40f;
@@ -1045,7 +1055,8 @@ public class UnitTypes implements ContentList{
             engineOffset = 21;
             engineSize = 5.3f;
             hitSize = 46f;
-            targetFlag = BlockFlag.battery;
+            targetFlags = new BlockFlag[]{BlockFlag.generator, BlockFlag.core, null};
+            ammoType = AmmoTypes.thorium;
 
             BulletType missiles = new MissileBulletType(2.7f, 14){{
                 width = 8f;
@@ -1120,7 +1131,8 @@ public class UnitTypes implements ContentList{
             hitSize = 58f;
             destructibleWreck = false;
             armor = 13f;
-            targetFlag = BlockFlag.reactor;
+            targetFlags = new BlockFlag[]{BlockFlag.reactor, BlockFlag.core, null};
+            ammoType = AmmoTypes.thorium;
 
             BulletType fragBullet = new FlakBulletType(4f, 5){{
                 shootEffect = Fx.shootBig;
@@ -1333,7 +1345,7 @@ public class UnitTypes implements ContentList{
             buildBeamOffset = 23;
             range = 140f;
             targetAir = false;
-            targetFlag = BlockFlag.battery;
+            targetFlags = new BlockFlag[]{BlockFlag.battery, BlockFlag.factory, null};
 
             ammoType = AmmoTypes.powerHigh;
 
@@ -1405,9 +1417,7 @@ public class UnitTypes implements ContentList{
             commandLimit = 6;
             lowAltitude = true;
             buildBeamOffset = 43;
-
-            ammoCapacity = 1300;
-            ammoResupplyAmount = 20;
+            ammoCapacity = 1;
 
             abilities.add(new ForceFieldAbility(140f, 4f, 7000f, 60f * 8), new RepairFieldAbility(130f, 60f * 2, 140f));
         }};
@@ -1475,6 +1485,7 @@ public class UnitTypes implements ContentList{
             accel = 0.3f;
             rotateSpeed = 2.6f;
             rotateShooting = false;
+            ammoType = AmmoTypes.graphite;
 
             trailLength = 20;
             trailX = 5.5f;
@@ -1518,6 +1529,7 @@ public class UnitTypes implements ContentList{
             hitSize = 20f;
             armor = 7f;
             rotateShooting = false;
+            ammoType = AmmoTypes.graphite;
 
             trailLength = 22;
             trailX = 7f;
@@ -1581,6 +1593,7 @@ public class UnitTypes implements ContentList{
                 inaccuracy = 5f;
                 velocityRnd = 0.1f;
                 shootSound = Sounds.missile;
+                ammoType = AmmoTypes.thorium;
 
                 ejectEffect = Fx.none;
                 bullet = new MissileBulletType(2.7f, 12){{
@@ -1614,6 +1627,7 @@ public class UnitTypes implements ContentList{
             accel = 0.2f;
             rotateSpeed = 1.3f;
             rotateShooting = false;
+            ammoType = AmmoTypes.thorium;
 
             trailLength = 50;
             trailX = 18f;
@@ -1699,6 +1713,7 @@ public class UnitTypes implements ContentList{
             accel = 0.19f;
             rotateSpeed = 0.9f;
             rotateShooting = false;
+            ammoType = AmmoTypes.powerHigh;
 
             float spawnTime = 60f * 15f;
 
@@ -1756,6 +1771,7 @@ public class UnitTypes implements ContentList{
             trailScl = 1.3f;
             rotateShooting = false;
             range = 100f;
+            ammoType = AmmoTypes.power;
 
             armor = 3f;
 
@@ -1833,6 +1849,7 @@ public class UnitTypes implements ContentList{
             trailX = 5.5f;
             trailY = -4f;
             trailScl = 1.9f;
+            ammoType = AmmoTypes.coal;
 
             buildSpeed = 2f;
 
@@ -1901,6 +1918,7 @@ public class UnitTypes implements ContentList{
             hitSize = 20f;
             armor = 6f;
             rotateShooting = false;
+            ammoType = AmmoTypes.graphite;
 
             trailLength = 23;
             trailX = 9f;
@@ -2036,6 +2054,8 @@ public class UnitTypes implements ContentList{
             accel = 0.2f;
             rotateSpeed = 1.4f;
             rotateShooting = false;
+            ammoType = AmmoTypes.powerHigh;
+            ammoCapacity = 40;
 
             //clip size is massive due to energy field
             clipSize = 250f;
@@ -2079,6 +2099,7 @@ public class UnitTypes implements ContentList{
             accel = 0.2f;
             rotateSpeed = 1.1f;
             rotateShooting = false;
+            ammoType = AmmoTypes.powerHigh;
 
             trailLength = 70;
             trailX = 23f;
