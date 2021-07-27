@@ -48,7 +48,7 @@ public class Blocks implements ContentList{
 
     //crafting
     siliconSmelter, siliconCrucible, kiln, graphitePress, plastaniumCompressor, multiPress, phaseWeaver, surgeSmelter, pyratiteMixer, blastMixer, cryofluidMixer,
-    melter, separator, disassembler, sporePress, pulverizer, incinerator, coalCentrifuge,
+    melter, separator, disassembler, sporePress, pulverizer, incinerator, coalCentrifuge, supercoolantRefinery, insulatorPress,
 
     //sandbox
     powerSource, powerVoid, itemSource, itemVoid, liquidSource, liquidVoid, payloadSource, payloadVoid, illuminator,
@@ -56,7 +56,7 @@ public class Blocks implements ContentList{
     //defense
     copperWall, copperWallLarge, titaniumWall, titaniumWallLarge, plastaniumWall, plastaniumWallLarge, thoriumWall, thoriumWallLarge, door, doorLarge,
     phaseWall, phaseWallLarge, surgeWall, surgeWallLarge, mender, mendProjector, overdriveProjector, overdriveDome, forceProjector, shockMine,
-    scrapWall, scrapWallLarge, scrapWallHuge, scrapWallGigantic, thruster, //ok, these names are getting ridiculous, but at least I don't have humongous walls yet
+    scrapWall, scrapWallLarge, scrapWallHuge, scrapWallGigantic, thruster, insulatorWall, insulatorWallLarge, //ok, these names are getting ridiculous, but at least I don't have humongous walls yet
 
     //transport
     conveyor, titaniumConveyor, plastaniumConveyor, armoredConveyor, distributor, junction, itemBridge, phaseConveyor, sorter, invertedSorter, router,
@@ -728,6 +728,39 @@ public class Blocks implements ContentList{
             consumes.power(0.50f);
         }};
 
+        supercoolantRefinery = new LiquidConverter("supercoolant-refinery"){{
+            requirements(Category.crafting, with(Items.surgeAlloy, 25, Items.silicon, 30, Items.titanium, 120));
+            outputLiquid = new LiquidStack(Liquids.supercoolant, 0.2f);
+            health = 320;
+            craftTime = 120f;
+            size = 2;
+            hasPower = true;
+            hasItems = true;
+            hasLiquids = true;
+            rotate = false;
+            solid = true;
+            outputsLiquid = true;
+            drawer = new DrawMixer();
+
+            consumes.power(3f);
+            consumes.item(Items.insulator);
+            consumes.liquid(Liquids.cryofluid, 0.2f);
+        }};
+
+        insulatorPress = new GenericCrafter("insulator-press"){{
+            requirements(Category.crafting, with(Items.metaglass, 30, Items.plastanium, 50, Items.titanium, 120));
+            outputItem = new ItemStack(Items.insulator, 1);
+            health = 120;
+            craftTime = 120f;
+            size = 2;
+            hasItems = true;
+            hasPower = true;
+            solid = true;
+            consumes.items(with(Items.silicon, 1, Items.plastanium, 1));
+            consumes.power(1f);
+        }};
+
+
         //endregion
         //region defense
 
@@ -853,6 +886,19 @@ public class Blocks implements ContentList{
         thruster = new Thruster("thruster"){{
             health = 55 * 16 * wallHealthMultiplier;
             size = 4;
+        }};
+
+        insulatorWall = new Wall("insulator-wall"){{
+            requirements(Category.defense, with(Items.insulator, 6));
+            health = 162 * wallHealthMultiplier;
+            
+        }};
+
+        insulatorWallLarge = new Wall("insulator-wall-large"){{
+            requirements(Category.defense, ItemStack.mult(insulatorWall.requirements, 2));
+            health = 162 * 2 * wallHealthMultiplier;
+            size = 2;
+            
         }};
 
         mender = new MendProjector("mender"){{
@@ -1509,7 +1555,8 @@ public class Blocks implements ContentList{
                 Liquids.water, Bullets.waterShot,
                 Liquids.slag, Bullets.slagShot,
                 Liquids.cryofluid, Bullets.cryoShot,
-                Liquids.oil, Bullets.oilShot
+                Liquids.oil, Bullets.oilShot,
+                Liquids.supercoolant, Bullets.supercoolantShot
             );
             size = 2;
             recoilAmount = 0f;
@@ -1659,7 +1706,8 @@ public class Blocks implements ContentList{
                 Liquids.water, Bullets.heavyWaterShot,
                 Liquids.slag, Bullets.heavySlagShot,
                 Liquids.cryofluid, Bullets.heavyCryoShot,
-                Liquids.oil, Bullets.heavyOilShot
+                Liquids.oil, Bullets.heavyOilShot,
+                Liquids.supercoolant, Bullets.heavySupercoolantShot
             );
             size = 3;
             reloadTime = 3f;

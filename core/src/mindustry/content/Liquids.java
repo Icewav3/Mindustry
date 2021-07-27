@@ -5,7 +5,7 @@ import mindustry.ctype.*;
 import mindustry.type.*;
 
 public class Liquids implements ContentList{
-    public static Liquid water, slag, oil, cryofluid;
+    public static Liquid water, slag, oil, cryofluid, supercoolant;
 
     @Override
     public void load(){
@@ -37,6 +37,13 @@ public class Liquids implements ContentList{
             temperature = 0.25f;
             effect = StatusEffects.freezing;
             lightColor = Color.valueOf("0097f5").a(0.2f);
+        }};
+
+        supercoolant = new Liquid("supercoolant", Color.valueOf("48cd9e")){{
+            heatCapacity = 1.8f; 
+            temperature = 0.1f; 
+            effect = StatusEffects.freezing;
+            lightColor = Color.valueOf("48cd7d").a(0.5f);
         }};
     }
 }
