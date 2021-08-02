@@ -63,6 +63,7 @@ abstract class BuildingComp implements Posc, Teamc, Healthc, Buildingc, Timerc, 
     transient boolean enabled = true;
     transient float enabledControlTime;
     transient String lastAccessed;
+    transient boolean wasDamaged; //used only by the indexer
 
     PowerModule power;
     ItemModule items;
@@ -1071,9 +1072,10 @@ abstract class BuildingComp implements Posc, Teamc, Healthc, Buildingc, Timerc, 
     }
 
     public String getDisplayName(){
+        //derelict team icon currently doesn't display
         return team == Team.derelict ?  
-            block.localizedName + "\n" + Core.bundle.get("block.derelict"):
-            block.localizedName;
+            block.localizedName + "\n" + Core.bundle.get("block.derelict") :
+            block.localizedName + (team == player.team() || team.emoji.isEmpty() ? "" : " " + team.emoji);
     }
 
     public TextureRegion getDisplayIcon(){
@@ -1102,7 +1104,7 @@ abstract class BuildingComp implements Posc, Teamc, Healthc, Buildingc, Timerc, 
             table.row();
             table.table(this::displayConsumption).growX();
 
-            boolean displayFlow = (block.category == Category.distribution || block.category == Category.liquid) && Core.settings.getBool("flow") && block.displayFlow;
+            boolean displayFlow = (block.category == Category.distribution || block.category == Category.liquid) && block.displayFlow;
 
             if(displayFlow){
                 String ps = " " + StatUnit.perSecond.localized();
@@ -1342,6 +1344,18 @@ abstract class BuildingComp implements Posc, Teamc, Healthc, Buildingc, Timerc, 
     @Override
     public boolean isValid(){
         return tile.build == self() && !dead();
+    }
+
+    @MethodPriority(100)
+    @Override
+    public void heal(){
+        indexer.notifyBuildHealed(self());
+    }
+
+    @MethodPriority(100)
+    @Override
+    public void heal(float amount){
+        indexer.notifyBuildHealed(self());
     }
 
     @Override

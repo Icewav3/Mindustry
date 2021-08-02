@@ -130,7 +130,7 @@ public class Fx{
         Fill.circle(x, y, e.fslope() * 1.5f * size);
     }),
 
-    pointBeam = new Effect(25f, e -> {
+    pointBeam = new Effect(25f, 300f, e -> {
         if(!(e.data instanceof Position)) return;
 
         Position pos = e.data();
@@ -182,6 +182,16 @@ public class Fx{
         color(Pal.accent);
         stroke(3f - e.fin() * 2f);
         Lines.square(e.x, e.y, tilesize / 2f * e.rotation + e.fin() * 3f);
+    }),
+
+    coreLaunchConstruct = new Effect(35, e -> {
+        color(Pal.accent);
+        stroke(4f - e.fin() * 3f);
+        Lines.square(e.x, e.y, tilesize / 2f * e.rotation * 1.2f + e.fin() * 5f);
+
+        randLenVectors(e.id, 5 + (int)(e.rotation * 5), e.rotation * 3f + (tilesize * e.rotation) * e.finpow() * 1.5f, (x, y) -> {
+            Lines.lineAngle(e.x + x, e.y + y, Mathf.angle(x, y), 1f + e.fout() * (4f + e.rotation));
+        });
     }),
 
     tapBlock = new Effect(12, e -> {

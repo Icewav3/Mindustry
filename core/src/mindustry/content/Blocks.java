@@ -657,8 +657,8 @@ public class Blocks implements ContentList{
             craftTime = 35f;
             size = 2;
 
-            consumes.power(1f);
-            consumes.liquid(Liquids.slag, 0.07f);
+            consumes.power(1.1f);
+            consumes.liquid(Liquids.slag, 4f / 60f);
         }};
 
         disassembler = new Separator("disassembler"){{
@@ -702,7 +702,9 @@ public class Blocks implements ContentList{
             craftTime = 40f;
             updateEffect = Fx.pulverizeSmall;
             hasItems = hasPower = true;
-            drawer = new DrawRotator();
+            drawer = new DrawRotator(){{
+                drawSpinSprite = true;
+            }};
             ambientSound = Sounds.grinding;
             ambientSoundVolume = 0.025f;
 
@@ -1651,7 +1653,7 @@ public class Blocks implements ContentList{
             shots = 4;
             burstSpacing = 5;
             inaccuracy = 10f;
-            range = 215f;
+            range = 235f;
             xRand = 6f;
             size = 2;
             health = 300 * size * size;

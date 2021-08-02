@@ -31,7 +31,7 @@ public class Renderer implements ApplicationListener{
     private static final float cloudScaling = 1700f, cfinScl = -2f, cfinOffset = 0.3f, calphaFinOffset = 0.25f;
     private static final float[] cloudAlphas = {0, 0.5f, 1f, 0.1f, 0, 0f};
     private static final float cloudAlpha = 0.81f;
-    private static final float[] thrusterSize = {0f, 0f, 0f, 0f, 0.3f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0f};
+    private static final float[] thrusterSizes = {0f, 0f, 0f, 0f, 0.3f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0f};
     private static final Interp landInterp = Interp.pow3;
 
     public final BlockRenderer blocks = new BlockRenderer();
@@ -44,16 +44,34 @@ public class Renderer implements ApplicationListener{
     public @Nullable Bloom bloom;
     public FrameBuffer effectBuffer = new FrameBuffer();
     public boolean animateShields, drawWeather = true, drawStatus;
+    public float weatherAlpha;
     /** minZoom = zooming out, maxZoom = zooming in */
     public float minZoom = 1.5f, maxZoom = 6f;
     public Seq<EnvRenderer> envRenderers = new Seq<>();
     public TextureRegion[] bubbles = new TextureRegion[16], splashes = new TextureRegion[12];
 
     private @Nullable CoreBuild landCore;
+    private @Nullable CoreBlock launchCoreType;
     private Color clearColor = new Color(0f, 0f, 0f, 1f);
-    private float cloudSeed = 0f;
-    private float targetscale = Scl.scl(4), camerascale = targetscale, landscale, landTime, landPTimer, weatherAlpha, minZoomScl = Scl.scl(0.01f);
-    private float shakeIntensity, shaketime;
+    private float
+    //seed for cloud visuals, 0-1
+    cloudSeed = 0f,
+    //target camera scale that is lerp-ed to
+    targetscale = Scl.scl(4),
+    //current actual camera scale
+    camerascale = targetscale,
+    //minimum camera zoom value for landing/launching; constant TODO make larger?
+    minZoomScl = Scl.scl(0.02f),
+    //starts at coreLandDuration, ends at 0. if positive, core is landing.
+    landTime,
+    //timer for core landing particles
+    landPTimer,
+    //intensity for screen shake
+    shakeIntensity,
+    //current duration of screen shake
+    shakeTime;
+    //for landTime > 0: if true, core is currently *launching*, otherwise landing.
+    private boolean launching;
     private Vec2 camShakeOffset = new Vec2();
 
     public Renderer(){
@@ -63,7 +81,7 @@ public class Renderer implements ApplicationListener{
 
     public void shake(float intensity, float duration){
         shakeIntensity = Math.max(shakeIntensity, intensity);
-        shaketime = Math.max(shaketime, duration);
+        shakeTime = Math.max(shakeTime, duration);
     }
 
     public void addEnvRenderer(int mask, Runnable render){
@@ -112,9 +130,15 @@ public class Renderer implements ApplicationListener{
             if(!state.isPaused()){
                 landTime -= Time.delta;
             }
-            landscale = landInterp.apply(minZoomScl, Scl.scl(4f), 1f - landTime / coreLandDuration);
-            camerascale = landscale;
+            float fin = landTime / coreLandDuration;
+            if(!launching) fin = 1f - fin;
+            camerascale = landInterp.apply(minZoomScl, Scl.scl(4f), fin);
             weatherAlpha = 0f;
+
+            //snap camera to cutscene core regardless of player input
+            if(landCore != null){
+                camera.position.set(landCore);
+            }
         }else{
             weatherAlpha = Mathf.lerpDelta(weatherAlpha, 1f, 0.08f);
         }
@@ -126,12 +150,12 @@ public class Renderer implements ApplicationListener{
             landTime = 0f;
             graphics.clear(Color.black);
         }else{
-            if(shaketime > 0){
+            if(shakeTime > 0){
                 float intensity = shakeIntensity * (settings.getInt("screenshake", 4) / 4f) * 0.75f;
                 camShakeOffset.setToRandomDirection().scl(Mathf.random(intensity));
                 camera.position.add(camShakeOffset);
                 shakeIntensity -= 0.25f * Time.delta;
-                shaketime -= Time.delta;
+                shakeTime -= Time.delta;
                 shakeIntensity = Mathf.clamp(shakeIntensity, 0f, 100f);
             }else{
                 camShakeOffset.setZero();
@@ -148,16 +172,13 @@ public class Renderer implements ApplicationListener{
         }
     }
 
-    public boolean isLanding(){
+    /** @return whether a launch/land cutscene is playing. */
+    public boolean isCutscene(){
         return landTime > 0;
     }
 
-    public float weatherAlpha(){
-        return weatherAlpha;
-    }
-
     public float landScale(){
-        return landTime > 0 ? landscale : 1f;
+        return landTime > 0 ? camerascale : 1f;
     }
 
     @Override
@@ -290,11 +311,12 @@ public class Renderer implements ApplicationListener{
     }
 
     private void drawBackground(){
-
+        //nothing to draw currently
     }
 
     void updateLandParticles(){
-        float tsize = Mathf.sample(thrusterSize, (landTime + 35f) / coreLandDuration);
+        float time = launching ? coreLandDuration - landTime : landTime;
+        float tsize = Mathf.sample(thrusterSizes, (time + 35f) / coreLandDuration);
 
         landPTimer += tsize * Time.delta;
         if(landCore != null && landPTimer >= 1f){
@@ -313,17 +335,28 @@ public class Renderer implements ApplicationListener{
         var clouds = assets.get("sprites/clouds.png", Texture.class);
         if(landTime > 0 && build != null){
             float fout = landTime / coreLandDuration;
+
+            if(launching) fout = 1f - fout;
+
             float fin = 1f - fout;
 
-            //core
-            var block = (CoreBlock)build.block;
+            //draw core
+            var block = launching && launchCoreType != null ? launchCoreType : (CoreBlock)build.block;
             TextureRegion reg = block.fullIcon;
             float scl = Scl.scl(4f) / camerascale;
             float shake = 0f;
             float s = reg.width * Draw.scl * scl * 3.6f * Interp.pow2Out.apply(fout);
             float rotation = Interp.pow2In.apply(fout) * 135f, x = build.x + Mathf.range(shake), y = build.y + Mathf.range(shake);
             float thrustOpen = 0.25f;
-            float frame = fin >= thrustOpen ? 1f : fin / thrustOpen;
+            float thrusterFrame = fin >= thrustOpen ? 1f : fin / thrustOpen;
+            float thrusterSize = Mathf.sample(thrusterSizes, fin);
+
+            //when launching, thrusters stay out the entire time.
+            if(launching){
+                Interp i = Interp.pow2Out;
+                thrusterFrame = i.apply(Mathf.clamp(fout*13f));
+                thrusterSize = i.apply(Mathf.clamp(fout*9f));
+            }
 
             Draw.color(Pal.lightTrail);
             //TODO spikier heat
@@ -333,20 +366,29 @@ public class Renderer implements ApplicationListener{
 
             float pfin = Interp.pow3Out.apply(fin), pf = Interp.pow2In.apply(fout);
 
-            //particles
+            //draw particles
             Angles.randLenVectors(1, pfin, 100, 800f * scl * pfin, (ax, ay, ffin, ffout) -> {
                 Lines.stroke(scl * ffin * pf * 3f);
                 Lines.lineAngle(build.x + ax, build.y + ay, Mathf.angle(ax, ay), (ffin * 20 + 1f) * scl);
             });
 
             Draw.color();
-            Draw.mixcol(Color.white, Interp.pow2In.apply(fout));
+            Draw.mixcol(Color.white, Interp.pow5In.apply(fout));
+
+            //accent tint indicating that the core was just constructed
+            if(launching){
+                float f = Mathf.clamp(1f - fout * 12f);
+                if(f > 0.001f){
+                    Draw.mixcol(Pal.accent, f);
+                }
+            }
+
             Draw.scl(scl);
 
             Draw.alpha(1f);
 
-            //thruster flame
-            float strength = (1f + (block.size - 3)/2.5f) * scl * Mathf.sample(thrusterSize, fin) * (0.95f + Mathf.absin(2f, 0.1f));
+            //draw thruster flame
+            float strength = (1f + (block.size - 3)/2.5f) * scl * thrusterSize * (0.95f + Mathf.absin(2f, 0.1f));
             float offset = (block.size - 3) * 3f * scl;
 
             for(int i = 0; i < 4; i++){
@@ -361,12 +403,12 @@ public class Renderer implements ApplicationListener{
                 Fill.circle(Tmp.v1.x + x, Tmp.v1.y + y, 3.5f * strength);
             }
 
-            drawThrusters(block, x, y, rotation, frame);
+            drawThrusters(block, x, y, rotation, thrusterFrame);
 
             Drawf.spinSprite(block.region, x, y, rotation);
 
-            Draw.alpha(Interp.pow4In.apply(frame));
-            drawThrusters(block, x, y, rotation, frame);
+            Draw.alpha(Interp.pow4In.apply(thrusterFrame));
+            drawThrusters(block, x, y, rotation, thrusterFrame);
             Draw.alpha(1f);
 
             Drawf.spinSprite(block.teamRegions[build.team.id], x, y, rotation);
@@ -375,23 +417,25 @@ public class Renderer implements ApplicationListener{
 
             Draw.reset();
 
-            //clouds
-            float scaling = cloudScaling;
-            float sscl = Math.max(1f + Mathf.clamp(fin + cfinOffset)* cfinScl, 0f) * landscale;
+            //draw clouds
+            if(state.rules.cloudColor.a > 0.0001f){
+                float scaling = cloudScaling;
+                float sscl = Math.max(1f + Mathf.clamp(fin + cfinOffset)* cfinScl, 0f) * camerascale;
 
-            Tmp.tr1.set(clouds);
-            Tmp.tr1.set(
-            (camera.position.x - camera.width/2f * sscl) / scaling,
-            (camera.position.y - camera.height/2f * sscl) / scaling,
-            (camera.position.x + camera.width/2f * sscl) / scaling,
-            (camera.position.y + camera.height/2f * sscl) / scaling);
+                Tmp.tr1.set(clouds);
+                Tmp.tr1.set(
+                (camera.position.x - camera.width/2f * sscl) / scaling,
+                (camera.position.y - camera.height/2f * sscl) / scaling,
+                (camera.position.x + camera.width/2f * sscl) / scaling,
+                (camera.position.y + camera.height/2f * sscl) / scaling);
 
-            Tmp.tr1.scroll(10f * cloudSeed, 10f * cloudSeed);
+                Tmp.tr1.scroll(10f * cloudSeed, 10f * cloudSeed);
 
-            Draw.alpha(Mathf.sample(cloudAlphas, fin + calphaFinOffset) * cloudAlpha);
-            Draw.mixcol(state.rules.cloudColor, state.rules.cloudColor.a);
-            Draw.rect(Tmp.tr1, camera.position.x, camera.position.y, camera.width, camera.height);
-            Draw.reset();
+                Draw.alpha(Mathf.sample(cloudAlphas, fin + calphaFinOffset) * cloudAlpha);
+                Draw.mixcol(state.rules.cloudColor, state.rules.cloudColor.a);
+                Draw.rect(Tmp.tr1, camera.position.x, camera.position.y, camera.width, camera.height);
+                Draw.reset();
+            }
         }
     }
 
@@ -451,10 +495,23 @@ public class Renderer implements ApplicationListener{
         clampScale();
     }
 
-    public void showLaunch(){
-        landscale = minZoomScl;
+    public void showLanding(){
+        launching = false;
+        camerascale = minZoomScl;
         landTime = coreLandDuration;
         cloudSeed = Mathf.random(1f);
+    }
+
+    public void showLaunch(CoreBlock coreType){
+        Vars.ui.hudfrag.showLaunch();
+        launchCoreType = coreType;
+        launching = true;
+        landCore = player.team().core();
+        cloudSeed = Mathf.random(1f);
+        landTime = coreLandDuration;
+        if(landCore != null){
+            Fx.coreLaunchConstruct.at(landCore.x, landCore.y, coreType.size);
+        }
     }
 
     public void takeMapScreenshot(){

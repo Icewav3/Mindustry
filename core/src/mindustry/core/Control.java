@@ -201,9 +201,9 @@ public class Control implements ApplicationListener, Loadable{
             camera.position.set(core);
             player.set(core);
 
-            if(showLandAnimation){
+            if(!settings.getBool("skipcoreanimation")){
                 //delay player respawn so animation can play.
-                player.deathTimer = -70f;
+                player.deathTimer = -80f;
                 //TODO this sounds pretty bad due to conflict
                 if(settings.getInt("musicvol") > 0){
                     Musics.land.stop();
@@ -212,7 +212,7 @@ public class Control implements ApplicationListener, Loadable{
                 }
 
                 app.post(() -> ui.hudfrag.showLand());
-                renderer.showLaunch();
+                renderer.showLanding();
 
                 Time.run(coreLandDuration, () -> {
                     Fx.launch.at(core);
@@ -544,7 +544,12 @@ public class Control implements ApplicationListener, Loadable{
                 core.items.each((i, a) -> i.unlock());
             }
 
-            if(Core.input.keyTap(Binding.pause) && !scene.hasDialog() && !scene.hasKeyboard() && !ui.restart.isShown() && (state.is(State.paused) || state.is(State.playing))){
+            //cannot launch while paused
+            if(state.is(State.paused) && renderer.isCutscene()){
+                state.set(State.playing);
+            }
+
+            if(Core.input.keyTap(Binding.pause) && !renderer.isCutscene() && !scene.hasDialog() && !scene.hasKeyboard() && !ui.restart.isShown() && (state.is(State.paused) || state.is(State.playing))){
                 state.set(state.is(State.playing) ? State.paused : State.playing);
             }
 
